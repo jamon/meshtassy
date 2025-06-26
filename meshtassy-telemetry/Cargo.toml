@@ -1,0 +1,30 @@
+[package]
+name = "meshtassy-telemetry"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embassy-embedded-hal = { version = "0.3.0", git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227", features = [
+  "defmt",
+] }
+embassy-sync = { version = "0.7.0", git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227", features = [
+  "defmt",
+] }
+embassy-time = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227", features = [
+  "defmt",
+  "defmt-timestamp-uptime",
+] }
+
+defmt = "1.0.1"
+embedded-hal = { version = "1.0" }
+embedded-hal-async = { version = "1.0" }
+femtopb = { version = "0.8.0", features = ["defmt"] }
+
+# Sensor crates, should probably be dependent on a config that enables/disables them?
+bosch-bme680 = { version = "1.0.4", features = ["embedded-hal-async"] }
+libscd = { version = "0.5.1", features = ["async", "defmt", "scd30"] }
+
+# Local crates
+meshtastic-protobufs = { path = "../meshtastic-protobufs", version = "0.1.0", features = [
+  "defmt",
+] }

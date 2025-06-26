@@ -1,5 +1,5 @@
 [package]
-name = "meshtassy-nrf"
+name = "meshtassy-rp"
 version = "0.1.0"
 edition = "2021"
 
@@ -23,13 +23,13 @@ embassy-time = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy
   "defmt",
   "defmt-timestamp-uptime",
 ] }
-embassy-nrf = { version = "0.3.1", git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227", features = [
+embassy-rp = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227", features = [
+  "binary-info",
+  "critical-section-impl",
   "defmt",
-  "nrf52840",
-  "time-driver-rtc1",
-  "gpiote",
+  "rp2040",
+  "time-driver",
   "unstable-pac",
-  "time",
 ] }
 embassy-net = { version = "0.7.0", git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227", features = [
   "defmt",
@@ -57,11 +57,9 @@ defmt-rtt = "1.0.0"
 
 fixed = "1.10.0"
 static_cell = { version = "2" }
-cortex-m = { version = "0.7.6", features = [
-  "inline-asm",
-  "critical-section-single-core",
-] }
-cortex-m-rt = "0.7.0"
+portable-atomic = { version = "1.11.1", features = ["critical-section"] }
+cortex-m = { version = "0.7.7", features = ["inline-asm"] }
+cortex-m-rt = { version = "0.7.0", features = ["device"] }
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 rand = { version = "0.9.0", default-features = false }
 embedded-storage = "0.3.1"
@@ -97,11 +95,10 @@ meshtassy-net = { path = "../meshtassy-net", version = "0.1.0", default-features
 meshtassy-telemetry = { path = "../meshtassy-telemetry", version = "0.1.0" }
 
 [features]
-default = ["board-wisblock-rak4631"]
+default = ["board-pico-rp2040"]
 
 # Board-specific features
-board-seeed-xiao-nrf52840 = []
-board-wisblock-rak4631 = []
+board-pico-rp2040 = []
 
 [patch.crates-io]
 embassy-time-driver = { git = "https://github.com/embassy-rs/embassy.git", rev = "5e49985ed678659e199c58c8100e3ed18d2f6227" }

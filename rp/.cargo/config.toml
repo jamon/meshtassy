@@ -1,11 +1,10 @@
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
 # replace nRF82840_xxAA with your chip as listed in `probe-rs chip list`
-runner = "probe-rs run --chip nRF52840_xxAA"
+runner = "probe-rs run --chip rp2040"
 linker = "flip-link"
 
 [build]
-target = "thumbv7em-none-eabi"
+target = "thumbv6m-none-eabi"
 
 [env]
 DEFMT_LOG = "info"
-

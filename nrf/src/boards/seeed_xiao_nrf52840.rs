@@ -1,12 +1,12 @@
 //! Seeed Xiao nRF52840 board-specific configuration
-//! 
+//!
 //! Pin assignments and peripheral configuration for the Seeed Studio
 //! XIAO nRF52840 development board.
 
-use super::{BoardPeripherals, LoRaPeripherals, LedPeripherals};
+use super::{BoardPeripherals, LedPeripherals, LoRaPeripherals};
 use embassy_nrf::gpio::{Input, Level, Output, OutputDrive, Pull};
-use embassy_nrf::{bind_interrupts, pac, peripherals, rng, spim, usb};
 use embassy_nrf::usb::vbus_detect::HardwareVbusDetect;
+use embassy_nrf::{bind_interrupts, pac, peripherals, rng, spim, usb};
 use embassy_time::Delay;
 use embedded_hal_bus::spi::ExclusiveDevice;
 
@@ -18,7 +18,7 @@ bind_interrupts!(struct Irqs {
 });
 
 /// Pin assignments for the Seeed Xiao nRF52840 board
-/// 
+///
 /// LoRa Radio (SX126x):
 /// - NSS (Chip Select): P0_04
 /// - Reset: P0_28  
@@ -47,7 +47,7 @@ pub fn init_board(p: embassy_nrf::Peripherals) -> BoardPeripherals {
     let spi_sck = p.P1_13;
     let spi_miso = p.P1_14;
     let spi_mosi = p.P1_15;
-    let spim = spim::Spim::new(p.TWISPI0, Irqs, spi_sck, spi_miso, spi_mosi, spi_config);
+    let spim = spim::Spim::new(p.TWISPI1, Irqs, spi_sck, spi_miso, spi_mosi, spi_config);
     let spi = ExclusiveDevice::new(spim, nss, Delay);
 
     // Configure LEDs (active low)
@@ -56,8 +56,8 @@ pub fn init_board(p: embassy_nrf::Peripherals) -> BoardPeripherals {
     let led_blue = Output::new(p.P0_06, Level::High, OutputDrive::Standard);
 
     // Configure USB driver
-    let usb_driver = usb::Driver::new(p.USBD, Irqs, HardwareVbusDetect::new(Irqs));    // Configure RNG
-    let rng = rng::Rng::new_blocking(p.RNG);    
+    let usb_driver = usb::Driver::new(p.USBD, Irqs, HardwareVbusDetect::new(Irqs)); // Configure RNG
+    let rng = rng::Rng::new_blocking(p.RNG);
     BoardPeripherals {
         lora: LoRaPeripherals {
             spi,
@@ -72,5 +72,6 @@ pub fn init_board(p: embassy_nrf::Peripherals) -> BoardPeripherals {
         }),
         usb_driver,
         rng,
+        i2c: None,
     }
 }

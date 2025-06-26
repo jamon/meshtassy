@@ -17,6 +17,9 @@ use std::path::PathBuf;
 //code? e.g. read TOML file with pins specified for I2C and SX1262 connection then replace values
 //s.t. board files are architecture specific and not vendor/model specific
 
+//TODO: Edit the memory.x build script and file to better genpartitions.py from the meshtastic
+//repo: https://github.com/meshtastic/firmware/blob/8efc9702d34fb579f22ae8e782949ef47340e348/bin/genpartitions.py
+
 fn main() {
     // // build the meshtastic protobufs using femtopb
     // femtopb_build::compile_protos(

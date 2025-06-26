@@ -7,7 +7,7 @@ use crate::usb_framer::Framer;
 use defmt::*;
 use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use embassy_executor::Spawner;
-use embassy_nrf::peripherals;
+use embassy_rp::peripherals;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
 use embassy_sync::pubsub::{PubSubBehavior, PubSubChannel};
@@ -24,9 +24,8 @@ use {defmt_rtt as _, panic_probe as _};
 
 use embassy_futures::join::join;
 use embassy_futures::select::{select, Either};
-use embassy_nrf::usb::vbus_detect::{HardwareVbusDetect, VbusDetect};
-use embassy_nrf::usb::{Driver, Instance};
-use embassy_usb::driver::EndpointError;
+use embassy_rp::usb::{Driver, Instance};
+use embassy_usb::driver::{EndpointError};
 use embassy_usb::{Builder, Config};
 
 use meshtassy_net::header::HeaderFlags;
@@ -93,7 +92,7 @@ async fn packet_processor_task() {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let p = embassy_nrf::init(Default::default());
+    let p = embassy_rp::init(Default::default());
 
     // Initialize board-specific peripherals
     let board = boards::init_board(p);    // USB
@@ -109,7 +108,6 @@ async fn main(spawner: Spawner) {
     // Use static allocations for USB descriptors and buffers
     let config_descriptor = CONFIG_DESCRIPTOR.init([0; 256]);
     let bos_descriptor = BOS_DESCRIPTOR.init([0; 256]);
-    let msos_descriptor = MSOS_DESCRIPTOR.init([0; 256]);
     let control_buf = CONTROL_BUF.init([0; 64]);
     let state = STATE.init(State::new());
 
@@ -118,7 +116,7 @@ async fn main(spawner: Spawner) {
         config,
         config_descriptor,
         bos_descriptor,
-        msos_descriptor,
+        &mut [],
         control_buf,
     );
 
@@ -134,6 +132,7 @@ async fn main(spawner: Spawner) {
     // Try initializing a BME
     //TODO: throw this in an embassy task that eventually scans a given i2c bus and configs the
     //sensors
+    
     if let Some(i2c_bus) = board.i2c {
         use meshtassy_telemetry::environmental_telemetry::EnvironmentData;
         use meshtassy_telemetry::TelemetrySensor;
@@ -236,7 +235,7 @@ async fn main(spawner: Spawner) {
         }    };
     let mut rng = board.rng;
     let mut bytes = [0u8; 4];
-    rng.blocking_fill_bytes(&mut bytes);
+    //rng.blocking_fill_bytes(&mut bytes); <- unavailable here and RoscRNG may be wrong
     let tx_packet_id = u32::from_le_bytes(bytes); // Create the transmission header
     let tx_header = Header {
         source: 0xDEADBEEF,
@@ -535,8 +534,8 @@ impl From<EndpointError> for Disconnected {
 }
 
 // Helper function to encode and send a FromRadio packet over USB
-async fn send_packet_to_usb<'d, T: Instance + 'd, P: VbusDetect + 'd>(
-    class: &mut CdcAcmClass<'d, Driver<'d, T, P>>,
+async fn send_packet_to_usb<'d, T: Instance + 'd>(
+    class: &mut CdcAcmClass<'d, Driver<'d, T>>,
     from_radio_packet: &FromRadio<'_>,
     buffer: &mut [u8; 256],
 ) -> Result<(), Disconnected> {
@@ -569,8 +568,8 @@ async fn send_packet_to_usb<'d, T: Instance + 'd, P: VbusDetect + 'd>(
     Ok(())
 }
 
-async fn packet_forwarder<'d, T: Instance + 'd, P: VbusDetect + 'd>(
-    class: &mut CdcAcmClass<'d, Driver<'d, T, P>>,
+async fn packet_forwarder<'d, T: Instance + 'd>(
+    class: &mut CdcAcmClass<'d, Driver<'d, T>>,
 ) -> Result<(), Disconnected> {
     let mut subscriber = PACKET_CHANNEL.subscriber().unwrap();
 
@@ -755,9 +754,9 @@ async fn packet_forwarder<'d, T: Instance + 'd, P: VbusDetect + 'd>(
 async fn usb_serial_task(
     mut usb: embassy_usb::UsbDevice<
         'static,
-        Driver<'static, peripherals::USBD, HardwareVbusDetect>,
+        Driver<'static, peripherals::USB>,
     >,
-    mut cdc: CdcAcmClass<'static, Driver<'static, peripherals::USBD, HardwareVbusDetect>>,
+    mut cdc: CdcAcmClass<'static, Driver<'static, peripherals::USB>>,
 ) {
     info!("Starting USB serial task");
     let usb_fut = usb.run();
@@ -802,8 +801,8 @@ fn create_my_node_info_packet(packet_id: u32) -> FromRadio<'static> {
                 my_node_num: 0xDEADBEEF, // Hardcoded node number - should be unique device ID
                 reboot_count: 42,        // Number of reboots (hardcoded for demo)
                 min_app_version: 30200,  // Minimum app version (3.2.0)
-                device_id: b"EMBASSY_NRF52", // 16-byte device identifier
-                pio_env: "embassy_nrf52", // Platform environment name
+                device_id: b"EMBASSY_RP2040", // 16-byte device identifier
+                pio_env: "embassy_rp2040", // Platform environment name
                 unknown_fields: Default::default(),
             }),
         ),
